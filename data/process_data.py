@@ -33,8 +33,8 @@ def standardize_data(data):
 def transform_categories(categories):
     """This function takes the categories columns and converts its values from string to binary values.
 
-    :param categories:
-    :return:
+    :type categories: DataFrame
+    :return: DataFrame
     """
     for column in categories:
         # set each value to be the last character of the string
@@ -47,6 +47,11 @@ def transform_categories(categories):
 
 
 def get_new_categories(categories):
+    """
+
+    :type categories: DataFrame
+    :return: DataFrame
+    """
 
     categories = categories.str.split(';', expand=True)
 
@@ -62,7 +67,12 @@ def remove_duplicated(data):
     return data.drop_duplicates()
 
 
-def preprocess_data(data):
+def clean_data(data):
+    """
+
+    :type data: DataFrame
+    :return: DataFrame
+    """
     categories = get_new_categories(data.categories)
 
     # drop the original categories column from `df`
@@ -73,18 +83,41 @@ def preprocess_data(data):
     return standardize_data(data)
 
 
-def save_to_database(data, save_filepath):
+def save_data(data, save_filepath):
+    """
+
+    :type data: DataFrame
+    :type save_filepath: str
+    :return: None
+    """
     engine = create_engine('sqlite:///{}'.format(save_filepath))
     data.to_sql('Message', engine, index=False, if_exists='replace')
 
 
 def main():
+    if len(sys.argv) == 4:
 
-    # todo check if arguments were sent.
-    message_filepath, category_filepath, database_filepath = sys.argv[1:]
-    df = load_data(message_filepath, category_filepath)
-    df = preprocess_data(df)
-    save_to_database(df, database_filepath)
+        messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
+
+        print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
+              .format(messages_filepath, categories_filepath))
+        df = load_data(messages_filepath, categories_filepath)
+
+        print('Cleaning data...')
+        df = clean_data(df)
+
+        print('Saving data...\n    DATABASE: {}'.format(database_filepath))
+        save_data(df, database_filepath)
+
+        print('Cleaned data saved to database!')
+
+    else:
+        print('Please provide the filepaths of the messages and categories ' \
+              'datasets as the first and second argument respectively, as ' \
+              'well as the filepath of the database to save the cleaned data ' \
+              'to as the third argument. \n\nExample: python process_data.py ' \
+              'disaster_messages.csv disaster_categories.csv ' \
+              'DisasterResponse.db')
 
 
 if __name__ == '__main__':

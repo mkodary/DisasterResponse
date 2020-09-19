@@ -18,6 +18,17 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 nltk.download(['punkt', 'wordnet'])
 
 
+def load_data(database_filepath):
+
+    # load data from database
+    engine = create_engine('sqlite:///{}'.format(database_filepath))
+    df = pd.read_sql_table('Message', engine)
+    X_df = df['message']
+    Y_df = df.iloc[:, 4:]
+
+    return X_df, Y_df
+
+
 def tokenize(text):
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     # get list of all urls using regex
@@ -34,7 +45,6 @@ def tokenize(text):
 
 
 def build_model(load_model_from_file=None):
-
     if load_model_from_file is not None:
         return pickle.load(load_model_from_file)
 
@@ -55,34 +65,40 @@ def build_model(load_model_from_file=None):
     return GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1)
 
 
-def save_model(model, filename):
-    pickle.dump(model, open(filename, 'wb'))
+def evaluate_model(model, X_test, Y_test, category_names):
+    pass
 
 
-def load_from_database(database_filepath):
-
-    # load data from database
-    engine = create_engine('sqlite:///{}'.format(database_filepath))
-    df = pd.read_sql_table('Message', engine)
-    X_df = df['message']
-    Y_df = df.iloc[:, 4:]
-
-    return X_df, Y_df
+def save_model(model, model_filepath):
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
-    # todo validate inputs are correct.
-    database_filepath, model_filename = sys.argv[1:]
+    if len(sys.argv) == 3:
+        database_filepath, model_filepath = sys.argv[1:]
+        print('Loading data...\n    DATABASE: {}'.format(database_filepath))
+        X_df, Y_df = load_data(database_filepath)
+        X_train, X_test, Y_train, Y_test = train_test_split(X_df.values, Y_df.values, test_size=0.2)
 
-    X_df, Y_df = load_from_database(database_filepath)
+        print('Building model...')
+        model = build_model()
 
-    X_train, X_test, y_train, y_test = train_test_split(X_df.values, Y_df.values)
-    model = build_model()
-    model.fit(X_train, y_train)
+        print('Training model...')
+        model.fit(X_train, Y_train)
 
-    # todo predict and evaluate model
+        print('Evaluating model...')
+        evaluate_model(model, X_test, Y_test, Y_df.columns)
 
-    save_model(model, model_filename)
+        print('Saving model...\n    MODEL: {}'.format(model_filepath))
+        save_model(model, model_filepath)
+
+        print('Trained model saved!')
+
+    else:
+        print('Please provide the filepath of the disaster messages database ' \
+              'as the first argument and the filepath of the pickle file to ' \
+              'save the model to as the second argument. \n\nExample: python ' \
+              'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
 
 if __name__ == '__main__':
