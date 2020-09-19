@@ -20,16 +20,6 @@ def load_data(message_filepath, category_filepath):
     )
 
 
-def standardize_data(data):
-    # todo this function could be further generalized instead of only standardizing 'related' column
-    """This function standardizes the category columns. Only applied to related column.
-
-    :type data: DateFrame
-    :return: DataFrame
-    """
-    return data['related'].replace([2], 1)
-
-
 def transform_categories(categories):
     """This function takes the categories columns and converts its values from string to binary values.
 
@@ -80,7 +70,11 @@ def clean_data(data):
     data = pd.concat([data, categories], axis=1)
     data = remove_duplicated(data)
 
-    return standardize_data(data)
+    data['related'] = data['related'].replace([2], 1)
+
+    # todo transform genre into dummies.
+
+    return data
 
 
 def save_data(data, save_filepath):
@@ -98,7 +92,6 @@ def main():
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]
-
         print('Loading data...\n    MESSAGES: {}\n    CATEGORIES: {}'
               .format(messages_filepath, categories_filepath))
         df = load_data(messages_filepath, categories_filepath)
