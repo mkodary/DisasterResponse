@@ -5,7 +5,14 @@ from sqlalchemy import create_engine
 
 
 def load_data(message_filepath, category_filepath):
+    """This function accepts two paths, and returns the merge of the two files.
 
+    :param message_filepath: This is the path for the csv file containing the messages.
+    :type message_filepath: str
+    :param category_filepath: This is the path for the csv file containing the categories available.
+    :type category_filepath: str
+    :return: DataFrame
+    """
     return pd.merge(
         pd.read_csv(message_filepath),
         pd.read_csv(category_filepath),
@@ -13,8 +20,22 @@ def load_data(message_filepath, category_filepath):
     )
 
 
-def transform_categories(categories):
+def standardize_data(data):
+    # todo this function could be further generalized instead of only standardizing 'related' column
+    """This function standardizes the category columns. Only applied to related column.
 
+    :type data: DateFrame
+    :return: DataFrame
+    """
+    return data['related'].replace([2], 1)
+
+
+def transform_categories(categories):
+    """This function takes the categories columns and converts its values from string to binary values.
+
+    :param categories:
+    :return:
+    """
     for column in categories:
         # set each value to be the last character of the string
         categories[column] = categories[column].apply(lambda x: x[-1])
@@ -39,10 +60,6 @@ def remove_duplicated(data):
     print('Duplicated rows: {}'.format(data.duplicated().sum()))
 
     return data.drop_duplicates()
-
-
-def standardize_data(data):
-    return data['related'].replace([2], 1)
 
 
 def preprocess_data(data):
@@ -72,6 +89,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
