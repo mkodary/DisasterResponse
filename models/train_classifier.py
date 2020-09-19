@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.multioutput import MultiOutputClassifier
@@ -65,19 +65,22 @@ def build_model():
         ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
 
-    parameters = {'vect__max_df': [0.7, 1.0],
-                  'tfidf__use_idf': [True, False],
-                  'clf__estimator__min_samples_split': [2, 5, 10],
-                  'clf__estimator__n_estimators': [10, 30],
-                  'clf__estimator__max_features': ['auto', 'sqrt'],
-                  'clf__estimator__min_samples_leaf': [1, 2, 4],
-                  }
+    parameters = {
+        'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
+        'features__text_pipeline__vect__max_df': (0.5, 0.75, 1.0),
+        'features__text_pipeline__vect__max_features': (None, 5000, 10000),
+        'features__text_pipeline__tfidf__use_idf': (True, False),
+        'clf__estimator__n_estimators': [50, 100, 200],
+        'clf__estimator__min_samples_split': [2, 3, 4],
+    }
 
     return GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1)
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    # predict on test data
+    y_pred = model.predict(X_test)
+    print(classification_report(Y_test, y_pred, target_names=category_names, zero_division=1))
 
 
 def save_model(model, model_filepath):
