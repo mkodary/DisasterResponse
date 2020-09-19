@@ -19,7 +19,12 @@ nltk.download(['punkt', 'wordnet'])
 
 
 def load_data(database_filepath):
+    """This function loads data from a database. Database must contain a table called 'Message'
 
+    :param database_filepath: relative path for the database.
+    :type database_filepath: str
+    :return: DataFrame, DataFrame
+    """
     # load data from database
     engine = create_engine('sqlite:///{}'.format(database_filepath))
     df = pd.read_sql_table('Message', engine)
@@ -30,6 +35,11 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    """Custom tokening function.
+
+    :type text: str
+    :return: list
+    """
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     # get list of all urls using regex
     text = re.sub(url_regex, "urlplaceholder", text.lower())
@@ -44,10 +54,11 @@ def tokenize(text):
     return tokens
 
 
-def build_model(load_model_from_file=None):
-    if load_model_from_file is not None:
-        return pickle.load(load_model_from_file)
+def build_model():
+    """This function creates a pipeline and adds it to GridSearchCV for parameter tuning.
 
+    :return: GridSearchCV object.
+    """
     pipeline = Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -70,6 +81,12 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """Saves models as a pickle file.
+
+    :param model: models object.
+    :type model_filepath: str
+    :return: None
+    """
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
@@ -80,24 +97,24 @@ def main():
         X_df, Y_df = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X_df.values, Y_df.values, test_size=0.2)
 
-        print('Building model...')
+        print('Building models...')
         model = build_model()
 
-        print('Training model...')
+        print('Training models...')
         model.fit(X_train, Y_train)
 
-        print('Evaluating model...')
+        print('Evaluating models...')
         evaluate_model(model, X_test, Y_test, Y_df.columns)
 
-        print('Saving model...\n    MODEL: {}'.format(model_filepath))
+        print('Saving models...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
 
-        print('Trained model saved!')
+        print('Trained models saved!')
 
     else:
         print('Please provide the filepath of the disaster messages database ' \
               'as the first argument and the filepath of the pickle file to ' \
-              'save the model to as the second argument. \n\nExample: python ' \
+              'save the models to as the second argument. \n\nExample: python ' \
               'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
 
 
