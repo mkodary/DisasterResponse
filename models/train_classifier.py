@@ -16,7 +16,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
-nltk.download(['punkt', 'wordnet'])
+nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
 
 class StartingVerbExtractor(BaseEstimator, TransformerMixin):
@@ -95,21 +95,33 @@ def build_model():
 
     parameters = get_tune_params()
 
-    return GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1)
+    return GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1, verbose=5)
 
 
 def get_tune_params():
+    """Function that creates the param dict.
+
+    :return: Dict
+    """
     return {
         'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
-        'features__text_pipeline__vect__max_df': (0.5, 0.75, 1.0),
+        'features__text_pipeline__vect__max_df': (0.75, 1.0),
         'features__text_pipeline__vect__max_features': (None, 5000, 10000),
         'features__text_pipeline__tfidf__use_idf': (True, False),
-        'clf__estimator__n_estimators': [50, 100, 200],
-        'clf__estimator__min_samples_split': [2, 3, 4],
+        'clf__estimator__n_estimators': [10, 30],
+        'clf__estimator__min_samples_split': [2, 3],
     }
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """This function evaluates the model by predicting the X_test and generating a report using classification_report
+
+    :param model: The model to use for predicting
+    :type X_test: DataFrame
+    :param Y_test: expected results when predicting
+    :param category_names: the labels provided.
+    :return: None
+    """
     # predict on test data
     y_pred = model.predict(X_test)
     print(classification_report(Y_test, y_pred, target_names=category_names, zero_division=1))
@@ -136,7 +148,7 @@ def main():
         model = build_model()
 
         print('Training models...')
-        model.fit(X_train, Y_train)
+        model = model.fit(X_train, Y_train)
 
         print('Evaluating models...')
         evaluate_model(model, X_test, Y_test, Y_df.columns.values.tolist())

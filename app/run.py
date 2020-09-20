@@ -3,35 +3,26 @@ import plotly
 import pandas as pd
 import joblib
 
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
-
 from flask import Flask
 from flask import render_template, request
 from plotly.graph_objs import Bar
 from sqlalchemy import create_engine
 
+import sys
+sys.path.append('..')
+
+from models.train_classifier import StartingVerbExtractor
+from models.train_classifier import tokenize
+
 app = Flask(__name__)
 
 
-def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
-
-    clean_tokens = []
-    for tok in tokens:
-        clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
-
-    return clean_tokens
-
-
 # load data
-engine = create_engine('sqlite:///../data/DisasterResponse.db')
+engine = create_engine('sqlite:///data/DisasterResponse.db')
 df = pd.read_sql_table('Message', engine)
 
 # load model
-model = joblib.load("../models/classifier.pkl")
+model = joblib.load("models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
@@ -43,7 +34,7 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     category_names = df.iloc[:, 4:].columns
-    category_count = (df.iloc[:, 4:]).nonzero().sum().values
+    category_count = (df.iloc[:, 4:] != 0).sum().values
 
     # create visuals
     graphs = [
