@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 .idea/
-DisasterResponse.db
+data/DisasterResponse.db
 models/classifier.pkl

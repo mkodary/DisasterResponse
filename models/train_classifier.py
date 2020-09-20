@@ -20,7 +20,8 @@ nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
 
 class StartingVerbExtractor(BaseEstimator, TransformerMixin):
-
+    """ Our custom Transfomer, checks if sentence starts with a verb.
+    """
     def starting_verb(self, text):
         sentence_list = nltk.sent_tokenize(text)
         for sentence in sentence_list:
@@ -43,7 +44,9 @@ def load_data(database_filepath):
 
     :param database_filepath: relative path for the database.
     :type database_filepath: str
-    :return: DataFrame, DataFrame
+    :return:
+        - X_df: DataFrame
+        - Y_df: DataFrame
     """
     # load data from database
     engine = create_engine('sqlite:///{}'.format(database_filepath))
@@ -58,7 +61,8 @@ def tokenize(text):
     """Custom tokening function.
 
     :type text: str
-    :return: list
+    :return:
+        - tokens: list
     """
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     # get list of all urls using regex
@@ -77,7 +81,8 @@ def tokenize(text):
 def build_model():
     """This function creates a pipeline and adds it to GridSearchCV for parameter tuning.
 
-    :return: GridSearchCV object.
+    :return:
+        - GridSearchCV object.
     """
     pipeline = Pipeline([
         ('features', FeatureUnion([
@@ -104,12 +109,10 @@ def get_tune_params():
     :return: Dict
     """
     return {
-        'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
         'features__text_pipeline__vect__max_df': (0.75, 1.0),
-        'features__text_pipeline__vect__max_features': (None, 5000, 10000),
         'features__text_pipeline__tfidf__use_idf': (True, False),
         'clf__estimator__n_estimators': [10, 30],
-        'clf__estimator__min_samples_split': [2, 3],
+        'clf__estimator__min_samples_split': [2, 3, 4],
     }
 
 
@@ -120,11 +123,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
     :type X_test: DataFrame
     :param Y_test: expected results when predicting
     :param category_names: the labels provided.
-    :return: None
+    :return:
+        - bool or dict: Bool if failed to create a report, else returns a dict
     """
     # predict on test data
     y_pred = model.predict(X_test)
-    print(classification_report(Y_test, y_pred, target_names=category_names, zero_division=1))
+
+    return classification_report(Y_test, y_pred, target_names=category_names, zero_division=1)
 
 
 def save_model(model, model_filepath):
@@ -151,7 +156,8 @@ def main():
         model = model.fit(X_train, Y_train)
 
         print('Evaluating models...')
-        evaluate_model(model, X_test, Y_test, Y_df.columns.values.tolist())
+        report = evaluate_model(model, X_test, Y_test, Y_df.columns.values.tolist())
+        print (report)
 
         print('Saving models...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)

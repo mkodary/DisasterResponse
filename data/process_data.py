@@ -37,7 +37,7 @@ def transform_categories(categories):
 
 
 def get_new_categories(categories):
-    """
+    """Generates new categories.
 
     :type categories: DataFrame
     :return: DataFrame
@@ -52,6 +52,12 @@ def get_new_categories(categories):
 
 
 def remove_duplicated(data):
+    """This function removes all duplicates in a DataFrame
+
+    :param data:
+    :return:
+        - data: DataFrame
+    """
     print('Duplicated rows: {}'.format(data.duplicated().sum()))
 
     return data.drop_duplicates()
@@ -61,7 +67,8 @@ def clean_data(data):
     """
 
     :type data: DataFrame
-    :return: DataFrame
+    :return:
+        - data: DataFrame
     """
     categories = get_new_categories(data.categories)
 
@@ -78,7 +85,7 @@ def clean_data(data):
 
 
 def save_data(data, save_filepath):
-    """
+    """This function saves a DataFrame data into the database using sql engine.
 
     :type data: DataFrame
     :type save_filepath: str
